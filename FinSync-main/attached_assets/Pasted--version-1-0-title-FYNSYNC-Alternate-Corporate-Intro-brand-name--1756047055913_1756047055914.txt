@@ -1,0 +1,154 @@
+{
+  "version": "1.0",
+  "title": "FYNSYNC Alternate Corporate Intro",
+  "brand": {
+    "name": "FYNSYNC",
+    "tagline": "Empowering Finance. Enabling Growth."
+  },
+  "output": {
+    "resolution": "1920x1080",
+    "fps": 30,
+    "duration_sec": 8,
+    "codec": "H264",
+    "background": {
+      "type": "grid",
+      "style": "modern_digital",
+      "grid_opacity": 0.18,
+      "grid_spacing_px": 48,
+      "particle_field": {
+        "enabled": true,
+        "density": 0.65,
+        "speed": 0.25,
+        "glow": 0.4,
+        "depth_parallax": 0.6
+      }
+    }
+  },
+  "palette": {
+    "primary": "#0A84FF",
+    "secondary": "#A0AEC0",
+    "accent": "#E6F0FF",
+    "white": "#FFFFFF",
+    "black": "#0A0F1A",
+    "metallic_gradient": ["#C8D3E3", "#89A4C7", "#FFFFFF"]
+  },
+  "typography": {
+    "logo_font": {
+      "style": "futuristic_sans",
+      "weight": 800,
+      "tracking": 10
+    },
+    "tagline_font": {
+      "style": "geometric_sans",
+      "weight": 500,
+      "tracking": 2
+    }
+  },
+  "camera": {
+    "default_ease": "easeInOutCubic",
+    "motion_blur": 0.35,
+    "depth_of_field": 0.25
+  },
+  "audio": {
+    "music": {
+      "type": "corporate_ambient_sting",
+      "start": 0.0,
+      "end": 8.0,
+      "intensity_curve": [
+        {"t": 0.0, "v": 0.2},
+        {"t": 1.6, "v": 0.5},
+        {"t": 4.0, "v": 0.8},
+        {"t": 6.0, "v": 0.9},
+        {"t": 7.5, "v": 0.6}
+      ]
+    },
+    "sfx": [
+      {"id": "data_whoosh", "type": "soft_whoosh", "t": 0.3, "gain": -6},
+      {"id": "grid_ping", "type": "digital_ping", "t": 1.0, "gain": -10},
+      {"id": "morph_chime", "type": "shimmer_chime", "t": 3.2, "gain": -4},
+      {"id": "logo_lock", "type": "cinematic_boom_soft", "t": 6.2, "gain": -3}
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene_01",
+      "label": "Data Atmosphere",
+      "start": 0.0,
+      "duration": 1.6,
+      "camera": {
+        "zoom": {"from": 1.15, "to": 1.0},
+        "yaw_deg": {"from": -6, "to": 0}
+      },
+      "elements": [
+        {
+          "type": "orbs",
+          "style": "rotating_digital",
+          "count": 12,
+          "radius_px": [6, 16],
+          "glow": 0.55,
+          "color": "#E6F0FF",
+          "motion": "circular_counter",
+          "speed": 0.6
+        },
+        {
+          "type": "code_streams",
+          "content": "0101…",
+          "flow_direction": "left_to_right",
+          "trail_glow": 0.4,
+          "opacity": 0.35,
+          "color": "#89A4C7"
+        }
+      ],
+      "transition_out": {
+        "type": "vector_swirl",
+        "duration": 0.25,
+        "easing": "easeInQuad"
+      }
+    },
+    {
+      "id": "scene_02",
+      "label": "Geometric Pulse",
+      "start": 1.6,
+      "duration": 1.8,
+      "camera": {
+        "zoom": {"from": 1.0, "to": 1.05},
+        "roll_deg": {"from": 0, "to": 3}
+      },
+      "elements": [
+        {
+          "type": "shapes",
+          "variants": ["hexagon", "triangle", "circle"],
+          "stroke_width": 2,
+          "glow": 0.5,
+          "colors": ["#0A84FF", "#A0AEC0", "#FFFFFF"],
+          "pulse_rate": 0.8,
+          "behavior": "interlock_and_sync"
+        },
+        {
+          "type": "icons",
+          "map": [
+            {"from": "hexagon", "to": "bar_chart"},
+            {"from": "triangle", "to": "line_chart"},
+            {"from": "circle", "to": "network_nodes"}
+          ],
+          "morph_progress": [
+            {"t": 1.9, "v": 0.3},
+            {"t": 2.6, "v": 0.9}
+          ],
+          "metallic_finish": true,
+          "gradient": "metallic_gradient"
+        }
+      ],
+      "transition_out": {
+        "type": "light_bloom",
+        "duration": 0.25,
+        "intensity": 0.6
+      }
+    },
+    {
+      "id": "scene_03",
+      "label": "Convergence Pulse",
+      "start": 3.4,
+      "duration": 1.4,
+      "camera": {
+        "zoom":

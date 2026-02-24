@@ -1,0 +1,14 @@
+INVOICE
+Shop Name: ABC Electronics
+GSTIN: 29AABCT1332L000
+Invoice Number: INV-001
+Invoice Date: 2024-01-15
+
+Items:
+1. Mobile Phone - HSN: 8517 - Amount: 10000
+
+Tax Details:
+CGST (9%): 900
+SGST (9%): 900
+Total Tax: 1800
+Total Amount: 11800

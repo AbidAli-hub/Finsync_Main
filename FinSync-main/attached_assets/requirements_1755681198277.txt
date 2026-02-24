@@ -1,0 +1,5 @@
+langgraph
+python-dotenv
+google-generativeai
+pandas
+openpyxl

@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./FinSync-main/python_backend"
+    ]
+}

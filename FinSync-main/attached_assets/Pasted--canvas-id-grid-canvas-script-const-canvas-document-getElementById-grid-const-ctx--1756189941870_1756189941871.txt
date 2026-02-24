@@ -1,0 +1,164 @@
+<canvas id="grid"></canvas>
+<script>
+const canvas = document.getElementById("grid");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const mouse = { x: null, y: null, radius: 120 }; // influence radius
+
+// Track mouse / touch
+window.addEventListener("mousemove", e => {
+  mouse.x = e.x;
+  mouse.y = e.y;
+});
+window.addEventListener("mouseleave", () => {
+  mouse.x = null;
+  mouse.y = null;
+});
+window.addEventListener("touchmove", e => {
+  mouse.x = e.touches[0].clientX;
+  mouse.y = e.touches[0].clientY;
+});
+window.addEventListener("touchend", () => {
+  mouse.x = null;
+  mouse.y = null;
+});
+
+// Node network
+const nodes = [];
+for (let i = 0; i < 90; i++) {
+  nodes.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    dx: (Math.random() - 0.5) * 0.7,
+    dy: (Math.random() - 0.5) * 0.7,
+    pulse: Math.random() * Math.PI * 2
+  });
+}
+
+// Financial + Crypto symbols
+const symbols = ["₹", "$", "€", "¥", "₿", "Ξ", "₩", "₺"];
+const particles = Array.from({ length: 35 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  speed: 0.5 + Math.random() * 1,
+  symbol: symbols[Math.floor(Math.random() * symbols.length)],
+  size: 14 + Math.random() * 8
+}));
+
+function animate() {
+  // Background
+  ctx.fillStyle = "rgba(0, 10, 25, 0.9)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Faint glowing grid
+  ctx.strokeStyle = "rgba(0,150,255,0.08)";
+  for (let x = 0; x < canvas.width; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += 80) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+
+  // Node network with interaction
+  nodes.forEach(node => {
+    node.x += node.dx;
+    node.y += node.dy;
+    node.pulse += 0.05;
+
+    // Bounce from edges
+    if (node.x < 0 || node.x > canvas.width) node.dx *= -1;
+    if (node.y < 0 || node.y > canvas.height) node.dy *= -1;
+
+    // Cursor repulsion
+    if (mouse.x && mouse.y) {
+      const dx = node.x - mouse.x;
+      const dy = node.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < mouse.radius) {
+        const angle = Math.atan2(dy, dx);
+        const force = (mouse.radius - dist) / mouse.radius; // closer = stronger
+        node.x += Math.cos(angle) * force * 6;
+        node.y += Math.sin(angle) * force * 6;
+      }
+    }
+
+    // Pulse glow
+    const radius = 2.5 + Math.sin(node.pulse) * 1.2;
+    const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 12);
+    gradient.addColorStop(0, "#00CFFF");
+    gradient.addColorStop(1, "transparent");
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, radius * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#0077FF";
+    ctx.fill();
+  });
+
+  // Connecting lines
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[i].x - nodes[j].x;
+      const dy = nodes[i].y - nodes[j].y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < 150) {
+        const opacity = 1 - distance / 150;
+        ctx.strokeStyle = `rgba(0,180,255,${opacity})`;
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Floating financial symbols
+  particles.forEach(p => {
+    ctx.font = `${p.size}px Arial`;
+    ctx.fillStyle = "rgba(0, 200, 255, 0.8)";
+    ctx.fillText(p.symbol, p.x, p.y);
+    p.y -= p.speed;
+    if (p.y < -20) {
+      p.x = Math.random() * canvas.width;
+      p.y = canvas.height + 20;
+    }
+  });
+
+  // FinSync Title
+  ctx.font = "bold 64px Arial";
+  ctx.fillStyle = "rgba(0,180,255,0.95)";
+  ctx.textAlign = "center";
+  ctx.fillText("FinSync", canvas.width / 2, canvas.height / 2 - 30);
+
+  // Slogan
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "rgba(200,230,255,0.8)";
+  ctx.fillText("Synchronizing Finance with Innovation", canvas.width / 2, canvas.height / 2 + 20);
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+
+<style>
+body, html { margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif; }
+#grid { position: fixed; top: 0; left: 0; z-index: -1; background: linear-gradient(135deg, #001530, #001f4d, #002a66); }
+</style>

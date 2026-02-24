@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSync GST Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Preload the background image for faster loading -->
+    <link rel="preload" href="https://cdn.corporatefinanceinstitute.com/assets/auditor-1024x684.jpeg" as="image">
+
+    <style>
+        /* --- Global Styles --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevents scrolling on auth/summary pages */
+        }
+        .antialiased {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .hidden-view {
+            display: none !important;
+        }
+
+        /* --- Auth Page Styles --- */
+        #image-panel {
+            background-image: url('https://cdn.corporatefinanceinstitute.com/assets/auditor-1024x684.jpeg');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(70%);
+        }
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            border-color: rgb(59 130 246);
+        }
+        .notification {
+            position: fixed; top: 1.5rem; right: 1.5rem; padding: 1rem 1.5rem; border-radius: 0.5rem;
+            background-color: #22c55e; color: white; font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateX(120%); transition: transform 0.4s ease-in-out; z-index: 150;
+        }
+        .notification.show { transform: translateX(0); }
+
+        /* --- Summary/Onboarding Styles --- */
+        #summary-container { transition: background-image 0.5s ease-in-out; }
+        .summary-bg-image, .summary-bg-image-2, .summary-bg-image-3, .summary-bg-image-4 {
+            background-size: cover; background-position: center; position: relative;
+        }
+        .summary-bg-image { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/008/218/106/small_2x/gst-written-words-on-paper-notebook-workplace-business-concept-photo.jpg'); }
+        .summary-bg-image-2 { background-image: url('https://img.freepik.com/premium-photo/businessman-working-laptop-showing-business-financial-data-analytics-insights-spreadsheet_927984-2573.jpg'); }
+        .summary-bg-image-3 { background-image: url('https://img.freepik.com/premium-photo/power-visuals-unveiling-insights-through-graphs-charts-business-reports_1000124-40871.jpg'); }
+        .summary-bg-image-4 { background-image: url('https://static.vecteezy.com/system/resources/thumbnails/007/229/153/small_2x/cyber-security-internet-and-networking-concept-information-security-and-encryption-secure-access-to-user-s-personal-information-secure-internet-access-cybersecurity-photo.jpg'); }
+        
+        .summary-bg-image::before, .summary-bg-image-2::before, .summary-bg-image-3::before, .summary-bg-image-4::before {
+            content: ''; position: absolute; inset: 0; background-color: rgba(0, 0, 0, 0.6); z-index: 1;
+        }
+        .summary-bg-image > *, .summary-bg-image-2 > *, .summary-bg-image-3 > *, .summary-bg-image-4 > * {
+            position: relative; z-index: 2;
+        }
+        .summary-slide h2 { font-weight: 800; font-size: 2.5rem; letter-spacing: -0.025em; }
+        .summary-slide p { font-size: 1.125rem; line-height: 1.75; max-width: 550px; margin: auto; }
+        .summary-bg-image h2, .summary-bg-image i, .summary-bg-image-2 h2, .summary-bg-image-2 i,
+        .summary-bg-image-3 h2, .summary-bg-image-3 i, .summary-bg-image-4 h2, .summary-bg-image-4 i {
+            color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .summary-bg-image p, .summary-bg-image-2 p, .summary-bg-image-3 p, .summary-bg-image-4 p { color: #e5e7eb; }
+        .progress-dot { transition: background-color 0.3s ease; }
+        #next-btn { transition: background-color 0.2s ease, transform 0.2s ease; }
+        #next-btn:hover { transform: translateY(-2px); }
+
+        /* --- Profile Picture Styles --- */
+        .profile-picture-wrapper {
+            position: relative;
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .profile-picture {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-picture-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0,0,0,0.4);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .profile-picture-wrapper:hover .profile-picture-overlay {
+            opacity: 1;
+        }
+
+        /* --- Dashboard Styles --- */
+        .page { 
+            opacity: 0; transform: translateY(20px); 
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out; 
+            display: none; position: absolute;
+            width: calc(100% - 4rem);
+        }
+        .page.active { opacity: 1; transform: translateY(0); display: block; position: relative; }
+        .nav-btn.active { 
+            background-color: #2563eb; color: white; 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .nav-btn { transition: all 0.2s ease-in-out; }
+        .nav-btn:hover { transform: translateX(4px); }
+        .alert {
+            display: flex; align-items: center; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;
+            animation: fadeIn 0.5s ease-out forwards;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .alert.error { background-color: #fee2e2; color: #b91c1c; border-left: 4px solid #ef4444; }
+        .alert.success { background-color: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .alert.info { background-color: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+        .alert-icon { margin-right: 0.75rem; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #drop-zone {
+            border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 2.5rem;
+            text-align: center; cursor: pointer; transition: background-color 0.3s, border-color 0.3s;
+        }
+        #drop-zone.dragover { background-color: #e0f2fe; border-color: #3b82f6; }
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            padding: 1rem 2rem; border-radius: 0.5rem; color: white; font-weight: 500;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            transition: bottom 0.5s ease-in-out; z-index: 1000;
+        }
+        #toast.show { bottom: 2rem; }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Container for the Login/Sign Up View -->
+    <main id="auth-container" class="min-h-screen grid grid-cols-1 md:grid-cols-2">
+        <div id="image-panel" class="hidden md:block"></div>
+        <div class="bg-gray-50 flex flex-col items-center justify-center p-6 md:p-12">
+            <div class="w-full max-w-md relative">
+                <div id="login-form">
+                    <div class="text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">FIN SYNC</h1>
+                        <p class="text-gray-500"> Please enter your login credentials</p>
+                    </div>
+                    <form id="login-form-element" class="mt-8 space-y-6">
+                        <div class="relative">
+                            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-user"></i></span>
+                            <input type="text" placeholder="Username" class="form-input w-full bg-gray-200 border border-gray-300 rounded-lg py-3 pl-12 pr-4 text-gray-800 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-lock"></i></span>
+                            <input type="password" placeholder="Password" class="form-input w-full bg-gray-200 border border-gray-300 rounded-lg py-3 pl-12 pr-4 text-gray-800 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="remember-me" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="remember-me" class="text-gray-600">Remember Me</label>
+                            </div>
+                            <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Forgot Password?</a>
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                LOGIN
+                            </button>
+                        </div>
+                    </form>
+                    <div class="relative my-6">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
+                        <div class="relative flex justify-center text-sm"><span class="bg-gray-50 px-2 text-gray-500">Or continue with</span></div>
+                    </div>
+                    <div>
+                        <button id="google-login-btn" class="flex items-center justify-center gap-3 w-full bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-colors">
+                            <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg>
+                            Sign in with Google
+                        </button>
+                    </div>
+                    <p class="mt-8 text-center text-sm text-gray-600">
+                        Don't have an account?
+                        <button id="show-signup" class="font-medium text-blue-600 hover:text-blue-500">Sign Up</button>
+                    </p>
+                </div>
+                <div id="signup-form" class="hidden-view">
+                    <div class="text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+                        <p class="text-gray-500">Join us! It's quick and easy.</p>
+                    </div>
+                    <form id="signup-form-element" class="mt-8 space-y-6">
+                        <div class="relative">
+                            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-envelope"></i></span>
+                            <input type="email" placeholder="Email Address" class="form-input w-full bg-gray-200 border border-gray-300 rounded-lg py-3 pl-12 pr-4 text-gray-800 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-user"></i></span>
+                            <input type="text" placeholder="Choose a Username" class="form-input w-full bg-gray-200 border border-gray-300 rounded-lg py-3 pl-12 pr-4 text-gray-800 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3.5 text-gray-400"><i class="fa-solid fa-lock"></i></span>
+                            <input type="password" placeholder="Create a Password" class="form-input w-full bg-gray-200 border border-gray-300 rounded-lg py-3 pl-12 pr-4 text-gray-800 focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                CREATE ACCOUNT
+                            </button>
+                        </div>
+                    </form>
+                    <p class="mt-8 text-center text-sm text-gray-600">
+                        Already have an account?
+                        <button id="show-login" class="font-medium text-blue-600 hover:text-blue-500">Login here</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Full-Page Summary/Onboarding Container -->
+    <div id="summary-container" class="min-h-screen bg-gray-50 flex items-center justify-center p-6 hidden-view">
+        <div class="w-full max-w-3xl">
+            <div id="summary-slides-container" class="relative">
+                <!-- Slide 1: Welcome -->
+                <div id="summary-slide-1" class="summary-slide text-center">
+                    <i class="fa-solid fa-rocket text-5xl mb-6"></i>
+                    <h2>Welcome to the Future of GST Management</h2>
+                    <p>
+                        Leave manual data entry behind. Our intelligent platform automates GST invoice processing, transforming tedious compliance tasks into a seamless, error-free workflow. This is where efficiency meets accuracy.
+                    </p>
+                </div>
+
+                <!-- Slide 2: Automated Extraction -->
+                <div id="summary-slide-2" class="summary-slide text-center hidden-view">
+                     <i class="fa-solid fa-wand-magic-sparkles text-5xl mb-6"></i>
+                    <h2>Intelligent, Automated Data Extraction</h2>
+                    <p>
+                        Upload any invoice—PDF, JPG, or PNG. Our powerful OCR and AI engine instantly identifies and extracts every crucial piece of data with precision, from GSTINs and HSN codes to line items and tax calculations.
+                    </p>
+                </div>
+
+                <!-- Slide 3: AI Accuracy & Export -->
+                <div id="summary-slide-3" class="summary-slide text-center hidden-view">
+                    <i class="fa-solid fa-file-excel text-5xl mb-6"></i>
+                    <h2>AI-Verified Accuracy & Instant Reports</h2>
+                    <p>
+                        Our system doesn't just extract data; it validates it. Powered by advanced AI like Google's Gemini, it cross-references information to ensure the highest accuracy, then lets you export perfectly structured Excel reports in one click.
+                    </p>
+                </div>
+
+                <!-- Slide 4: User-Friendly & Secure -->
+                 <div id="summary-slide-4" class="summary-slide text-center hidden-view">
+                    <i class="fa-solid fa-shield-halved text-5xl mb-6"></i>
+                    <h2>Secure, Intuitive, and Built for You</h2>
+                    <p>
+                        Experience a beautifully simple drag-and-drop interface designed for speed and ease of use. Your data is protected with enterprise-grade security, ensuring complete confidentiality and peace of mind. You are ready to begin.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Progress Dots -->
+            <div id="progress-dots" class="flex justify-center gap-3 my-8"></div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex items-center justify-between mt-8">
+                <button id="skip-btn" class="font-medium text-gray-500 hover:text-gray-800 px-4 py-2 text-lg">Skip</button>
+                <div class="flex items-center gap-3">
+                    <button id="prev-btn" class="font-medium text-gray-500 hover:text-gray-800 px-4 py-2 text-lg hidden-view">Previous</button>
+                    <button id="next-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Application Dashboard Container -->
+    <div id="dashboard-container" class="hidden-view">
+        <!-- The entire dashboard application HTML will be injected here by JS -->
+    </div>
+
+    <!-- Toast Notification placeholder -->
+    <div id="toast"></div>
+
+    <script>
+        // --- GLOBAL STATE & VIEW CONTAINERS ---
+        const authContainer = document.getElementById('auth-container');
+        const summaryContainer = document.getElementById('summary-container');
+        const dashboardContainer = document.getElementById('dashboard-container');
+        let userProfile = {
+            fullName: "Vamsi Tarun",
+            email: "codervamzzi1308@gmail.com",
+            occupation: "Student",
+            company: "VelTech University",
+            profilePicture: "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+        };
+
+        // --- AUTH SCRIPT ---
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const showSignupBtn = document.getElementById('show-signup');
+        const showLoginBtn = document.getElementById('show-login');
+        const loginFormElement = document.getElementById('login-form-element');
+        const signupFormElement = document.getElementById('signup-form-element');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        
+        showSignupBtn.addEventListener('click', (e) => { e.preventDefault(); loginForm.classList.add('hidden-view'); signupForm.classList.remove('hidden-view'); });
+        showLoginBtn.addEventListener('click', (e) => { e.preventDefault(); signupForm.classList.add('hidden-view'); loginForm.classList.remove('hidden-view'); });
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.className = 'notification';
+            document.body.appendChild(notification);
+            setTimeout(() => { notification.classList.add('show'); }, 10);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => { document.body.removeChild(notification); }, 400);
+            }, 3000);
+        }
+
+        loginFormElement.addEventListener('submit', (e) => {
+            e.preventDefault();
+            showNotification('Login successful! Welcome back.');
+            setTimeout(showSummary, 500); 
+        });
+
+        googleLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showNotification('Google sign-in successful!');
+            setTimeout(showSummary, 500);
+        });
+
+        signupFormElement.addEventListener('submit', (e) => {
+            e.preventDefault();
+            showNotification('Account created! Welcome.');
+            setTimeout(showSummary, 500);
+        });
+
+        
+        // --- SUMMARY/ONBOARDING SCRIPT ---
+        const slides = document.querySelectorAll('.summary-slide');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        const dotsContainer = document.getElementById('progress-dots');
+        let currentSlideIndex = 0;
+        const totalSlides = slides.length;
+
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'w-3 h-3 bg-gray-300 rounded-full progress-dot';
+            dotsContainer.appendChild(dot);
+        }
+        const dots = document.querySelectorAll('.progress-dot');
+
+        function updateSlideView() {
+            slides.forEach((s, i) => s.classList.toggle('hidden-view', i !== currentSlideIndex));
+            dots.forEach((d, i) => {
+                d.classList.toggle('bg-blue-600', i === currentSlideIndex);
+                d.classList.toggle('bg-gray-300', i !== currentSlideIndex);
+            });
+            summaryContainer.className = "min-h-screen bg-gray-50 flex items-center justify-center p-6"; // Reset
+            summaryContainer.classList.add(summary-bg-image${currentSlideIndex > 0 ? '-' + (currentSlideIndex + 1) : ''});
+            prevBtn.classList.toggle('hidden-view', currentSlideIndex === 0);
+            nextBtn.textContent = (currentSlideIndex === totalSlides - 1) ? 'Get Started' : 'Next';
+        }
+
+        nextBtn.addEventListener('click', () => { (currentSlideIndex < totalSlides - 1) ? (currentSlideIndex++, updateSlideView()) : showDashboard(); });
+        prevBtn.addEventListener('click', () => { if (currentSlideIndex > 0) { currentSlideIndex--; updateSlideView(); } });
+        skipBtn.addEventListener('click', showDashboard);
+
+        // --- VIEW MANAGEMENT ---
+        function showSummary() {
+            authContainer.classList.add('hidden-view');
+            summaryContainer.classList.remove('hidden-view');
+            dashboardContainer.classList.add('hidden-view');
+            currentSlideIndex = 0;
+            updateSlideView();
+        }
+
+        function showDashboard() {
+            authContainer.classList.add('hidden-view');
+            summaryContainer.classList.add('hidden-view');
+            dashboardContainer.classList.remove('hidden-view');
+            document.body.style.overflow = 'auto';
+            injectAndInitializeDashboard(userProfile);
+        }
+
+        // --- DASHBOARD INJECTION & SCRIPT ---
+        function injectAndInitializeDashboard(currentUserProfile) {
+            dashboardContainer.innerHTML = `
+                <div class="flex h-screen bg-gray-100">
+                    <aside class="w-64 bg-white shadow-lg flex flex-col flex-shrink-0">
+                        <div class="p-6 text-2xl font-bold text-blue-600 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 10.586V6z" clip-rule="evenodd" /></svg>
+                            <span>FinSync</span>
+                        </div>
+                        <nav class="flex-1 flex flex-col gap-2 p-4">
+                            <button class="nav-btn flex items-center gap-3 px-4 py-2 rounded-lg text-left text-gray-800" data-page="profile"><i class="fa-solid fa-user w-5 text-center"></i>Profile</button>
+                            <button class="nav-btn flex items-center gap-3 px-4 py-2 rounded-lg text-left text-gray-800" data-page="dashboard"><i class="fa-solid fa-chart-pie w-5 text-center"></i>Dashboard</button>
+                            <button class="nav-btn flex items-center gap-3 px-4 py-2 rounded-lg text-left text-gray-800" data-page="extractor"><i class="fa-solid fa-file-invoice w-5 text-center"></i>Extractor</button>
+                            <button class="nav-btn flex items-center gap-3 px-4 py-2 rounded-lg text-left text-gray-800" data-page="reports"><i class="fa-solid fa-folder-open w-5 text-center"></i>Reports</button>
+                            <button class="nav-btn flex items-center gap-3 px-4 py-2 rounded-lg text-left text-gray-800 mt-auto" data-page="settings"><i class="fa-solid fa-gear w-5 text-center"></i>Settings</button>
+                        </nav>
+                    </aside>
+                    <main class="flex-1 p-8 overflow-y-auto relative">
+                        <section id="dashboard" class="page">
+                            <h1 class="text-3xl font-bold mb-6 text-gray-800">Dashboard</h1>
+                            <div class="grid md:grid-cols-3 gap-6">
+                                <div class="bg-white p-6 rounded-xl shadow-md text-center transition-transform transform hover:-translate-y-1"><h2 class="text-lg font-semibold text-gray-600">Invoices Processed</h2><p id="invoices-processed" class="text-4xl font-bold text-blue-600 mt-2">0</p></div>
+                                <div class="bg-white p-6 rounded-xl shadow-md text-center transition-transform transform hover:-translate-y-1"><h2 class="text-lg font-semibold text-gray-600">Errors Detected</h2><p id="errors-detected" class="text-4xl font-bold text-red-600 mt-2">0</p></div>
+                                <div class="bg-white p-6 rounded-xl shadow-md text-center transition-transform transform hover:-translate-y-1"><h2 class="text-lg font-semibold text-gray-600">Reports Generated</h2><p id="reports-generated" class="text-4xl font-bold text-green-600 mt-2">0</p></div>
+                            </div>
+                            <h2 class="text-2xl font-bold mt-10 mb-4 text-gray-800">Recent Uploads</h2>
+                            <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+                                <table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-4 font-semibold text-gray-600">Invoice</th><th class="p-4 font-semibold text-gray-600">Date</th><th class="p-4 font-semibold text-gray-600">Amount</th><th class="p-4 font-semibold text-gray-600">Status</th></tr></thead><tbody id="invoice-table-body"></tbody></table>
+                            </div>
+                        </section>
+                        <section id="extractor" class="page">
+                            <h1 class="text-3xl font-bold mb-6 text-gray-800">Invoice Extractor</h1>
+                            <div id="drop-zone"><input type="file" id="file-input" class="hidden" multiple accept="image/png, image/jpeg, application/pdf"><div class="flex flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 15l-4-4m0 0l4-4m-4 4h12" /></svg><p class="mt-4 text-lg text-gray-600">Drag & drop files here or <span class="font-semibold text-blue-600">click to browse</span></p><p class="text-sm text-gray-500 mt-1">Supports: PDF, PNG, JPG</p></div></div>
+                            <div id="upload-progress-container" class="mt-6 hidden"><div class="w-full bg-gray-200 rounded-full h-2.5"><div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div></div></div>
+                            <div id="alert-box" class="mt-6"></div>
+                            <div id="download-container" class="mt-8 text-center hidden"><h2 class="text-xl font-semibold mb-4">Extraction Complete</h2><p class="text-gray-600 mb-6">Your invoice data has been processed. Download the report below.</p><button id="download-excel-extractor-btn" class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 transition-all flex items-center gap-2 mx-auto"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>Download Report (CSV)</button></div>
+                        </section>
+                        <section id="reports" class="page"><h1 class="text-3xl font-bold mb-6 text-gray-800">Downloaded Reports</h1><div id="downloaded-reports-container" class="bg-white p-8 rounded-lg shadow-md"></div></section>
+                        <section id="profile" class="page">
+                            <h1 class="text-3xl font-bold mb-6 text-gray-800">User Profile</h1>
+                            <div class="bg-white p-8 rounded-lg shadow-md">
+                                <div id="profile-view">
+                                    <div class="flex flex-col md:flex-row items-center gap-8">
+                                        <div class="profile-picture-wrapper flex-shrink-0">
+                                            <img id="profile-pic-preview" src="" alt="Profile Picture" class="profile-picture">
+                                        </div>
+                                        <div class="text-center md:text-left">
+                                            <h2 id="profile-name" class="text-3xl font-bold text-gray-800"></h2>
+                                            <p id="profile-occupation" class="text-lg text-blue-600 font-medium"></p>
+                                            <p id="profile-email" class="text-gray-500 mt-1"></p>
+                                            <p id="profile-company" class="text-gray-500"></p>
+                                            <button id="edit-profile-btn" class="mt-6 bg-blue-600 text-white px-5 py-2 rounded-lg shadow hover:bg-blue-700 transition">Edit Profile</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="profile-edit" class="hidden">
+                                    <h3 class="text-xl font-bold mb-6">Edit Profile Information</h3>
+                                    <div class="flex flex-col items-center mb-6">
+                                        <div class="profile-picture-wrapper mb-2">
+                                            <img id="edit-pic-preview" src="" alt="Profile Picture" class="profile-picture">
+                                            <div class="profile-picture-overlay"><i class="fa-solid fa-camera text-2xl"></i></div>
+                                        </div>
+                                        <input type="file" id="edit-pic-input" class="hidden" accept="image/*">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div><label class="block text-gray-600 mb-1">Full Name:</label><input type="text" id="edit-name" class="form-input w-full p-2 border rounded-md"></div>
+                                        <div><label class="block text-gray-600 mb-1">Email:</label><input type="email" id="edit-email" class="form-input w-full p-2 border rounded-md"></div>
+                                        <div><label class="block text-gray-600 mb-1">Occupation:</label><input type="text" id="edit-occupation" class="form-input w-full p-2 border rounded-md"></div>
+                                        <div><label class="block text-gray-600 mb-1">Company:</label><input type="text" id="edit-company" class="form-input w-full p-2 border rounded-md"></div>
+                                    </div>
+                                    <div class="mt-8 flex gap-4">
+                                        <button id="save-profile-btn" class="bg-green-600 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 transition">Save Changes</button>
+                                        <button id="cancel-edit-btn" class="bg-gray-500 text-white px-5 py-2 rounded-lg shadow hover:bg-gray-600 transition">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section id="settings" class="page">
+                            <h1 class="text-3xl font-bold mb-6 text-gray-800">Settings</h1>
+                            <div class="bg-white p-8 rounded-lg shadow-md">
+                                <div class="flex items-center justify-between mb-6"><span class="text-gray-600">Enable Notifications</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="notifications-toggle" class="sr-only peer" checked><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></div>
+                                <div class="flex items-center justify-between"><span class="text-gray-600">Dark Mode</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="dark-mode-toggle" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></div>
+                            </div>
+                            <div class="alert info mt-8"><span class="alert-icon">🔒</span>Your data is protected with enterprise-grade encryption.</div>
+                        </section>
+                    </main>
+                </div>
+            `;
+            
+            let invoiceData = [];
+            let downloadedReports = [];
+
+            const dashNavBtns = document.querySelectorAll("#dashboard-container .nav-btn");
+            const dashPages = document.querySelectorAll("#dashboard-container .page");
+            const dashInvoiceTableBody = document.getElementById("invoice-table-body");
+            const dashDropZone = document.getElementById("drop-zone");
+            const dashFileInput = document.getElementById("file-input");
+            const dashAlertBox = document.getElementById("alert-box");
+            const dashDarkModeToggle = document.getElementById('dark-mode-toggle');
+            const dashToast = document.getElementById('toast');
+            const dashDownloadedReportsContainer = document.getElementById('downloaded-reports-container');
+            const dashDownloadContainer = document.getElementById('download-container');
+
+            const updateDashboardCards = () => {
+                document.getElementById('invoices-processed').textContent = invoiceData.filter(i => i.status === 'Validated').length;
+                document.getElementById('errors-detected').textContent = invoiceData.filter(i => i.status === 'Error').length;
+                document.getElementById('reports-generated').textContent = downloadedReports.length;
+            };
+
+            const renderTable = () => {
+                dashInvoiceTableBody.innerHTML = invoiceData.length === 0 
+                    ? <tr><td colspan="4" class="text-center p-8 text-gray-500">No invoices uploaded yet.</td></tr>
+                    : invoiceData.map(invoice => {
+                        const statusStyles = { 'Validated': 'bg-green-100 text-green-800', 'Processing': 'bg-yellow-100 text-yellow-800', 'Error': 'bg-red-100 text-red-800' };
+                        return <tr class="hover:bg-gray-50 dark:hover:bg-gray-700"><td class="p-4 font-medium text-gray-800">${invoice.file.name}</td><td class="p-4 text-gray-600">${invoice.date}</td><td class="p-4 text-gray-600">$${invoice.amount.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusStyles[invoice.status] || ''}">${invoice.status}</span></td></tr>;
+                    }).join('');
+                updateDashboardCards();
+            };
+
+            const renderDownloadedReports = () => {
+                if (downloadedReports.length === 0) {
+                    dashDownloadedReportsContainer.innerHTML = <p class="text-gray-500 text-center">You haven't downloaded any reports yet.</p>;
+                    return;
+                }
+                dashDownloadedReportsContainer.innerHTML = `<table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-4 font-semibold text-gray-600">File Name</th><th class="p-4 font-semibold text-gray-600">Date Downloaded</th></tr></thead><tbody>${downloadedReports.map(r => <tr class="hover:bg-gray-50 dark:hover:bg-gray-700"><td class="p-4 font-medium text-gray-800">${r.name}</td><td class="p-4 text-gray-600">${r.date.toLocaleString()}</td></tr>).join('')}</tbody></table>`;
+                updateDashboardCards();
+            };
+
+            const dashShowToast = (message, type = 'success') => {
+                dashToast.textContent = message;
+                dashToast.className = '';
+                const toastStyles = { 'success': 'bg-green-600', 'error': 'bg-red-600', 'info': 'bg-blue-600' };
+                dashToast.classList.add('show', toastStyles[type]);
+                setTimeout(() => { dashToast.classList.remove('show'); }, 3000);
+            };
+
+            const dashSwitchPage = (pageId) => {
+                const targetNavBtn = document.querySelector(#dashboard-container .nav-btn[data-page="${pageId}"]);
+                dashNavBtns.forEach(b => b.classList.remove("active"));
+                if(targetNavBtn) targetNavBtn.classList.add("active");
+                dashPages.forEach(p => p.classList.remove("active"));
+                const activePage = document.getElementById(pageId);
+                if (activePage) setTimeout(() => activePage.classList.add("active"), 50);
+            };
+
+            dashNavBtns.forEach(btn => btn.addEventListener("click", () => dashSwitchPage(btn.dataset.page)));
+
+            const handleFiles = (files) => {
+                dashAlertBox.innerHTML = '';
+                dashDownloadContainer.classList.add('hidden');
+                if (files.length === 0) return;
+                const progressContainer = document.getElementById('upload-progress-container');
+                const progressBar = document.getElementById('progress-bar');
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '0%';
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = ${progress}%;
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            progressContainer.classList.add('hidden');
+                            let newFilesProcessed = false;
+                            Array.from(files).forEach(file => {
+                                if (invoiceData.some(inv => inv.file.name.toLowerCase() === file.name.toLowerCase())) {
+                                    showAlert(Duplicate entry detected for ${file.name}, 'error');
+                                } else {
+                                    newFilesProcessed = true;
+                                    invoiceData.unshift({ id: INV-00${invoiceData.length + 1}, date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }), amount: Math.random() * 5000 + 200, status: 'Validated', file: file });
+                                    showAlert(Successfully processed ${file.name}., 'success');
+                                }
+                            });
+                            if (newFilesProcessed) { renderTable(); dashDownloadContainer.classList.remove('hidden'); }
+                        }, 500);
+                    }
+                }, 100);
+            };
+
+            const showAlert = (message, type = 'info') => {
+                const icon = { 'success': '✅', 'error': '⚠', 'info': 'ℹ' }[type];
+                const alertDiv = document.createElement('div');
+                alertDiv.className = alert ${type};
+                alertDiv.innerHTML = <span class="alert-icon">${icon}</span> ${message};
+                dashAlertBox.appendChild(alertDiv);
+            };
+
+            dashDropZone.addEventListener('click', () => dashFileInput.click());
+            dashDropZone.addEventListener('dragover', (e) => { e.preventDefault(); dashDropZone.classList.add('dragover'); });
+            dashDropZone.addEventListener('dragleave', () => dashDropZone.classList.remove('dragover'));
+            dashDropZone.addEventListener('drop', (e) => { e.preventDefault(); dashDropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+            dashFileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            const downloadReport = () => {
+                const validatedInvoices = invoiceData.filter(inv => inv.status === 'Validated');
+                if (validatedInvoices.length === 0) { dashShowToast('No validated invoices to export.', 'info'); return; }
+                let csvContent = "data:text/csv;charset=utf-8,Invoice ID,File Name,Date,Amount,Status\n";
+                validatedInvoices.forEach(inv => { csvContent += ${inv.id},${inv.file.name},"${inv.date}",${inv.amount.toFixed(2)},${inv.status}\n; });
+                const link = document.createElement("a");
+                const filename = FinSync_Report_${new Date().toISOString().replace(/[:.]/g, '-')}.csv;
+                link.setAttribute("href", encodeURI(csvContent));
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                downloadedReports.unshift({ name: filename, date: new Date() });
+                renderDownloadedReports();
+                dashShowToast('Report exported successfully!', 'success');
+            };
+            document.getElementById('download-excel-extractor-btn').addEventListener('click', downloadReport);
+
+            // --- Profile Page Logic ---
+            const profileView = document.getElementById('profile-view');
+            const profileEdit = document.getElementById('profile-edit');
+            const editProfileBtn = document.getElementById('edit-profile-btn');
+            const saveProfileBtn = document.getElementById('save-profile-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const editPicInput = document.getElementById('edit-pic-input');
+            const editPicPreview = document.getElementById('edit-pic-preview');
+
+            function populateProfileView() {
+                document.getElementById('profile-pic-preview').src = currentUserProfile.profilePicture;
+                document.getElementById('profile-name').textContent = currentUserProfile.fullName;
+                document.getElementById('profile-email').textContent = currentUserProfile.email;
+                document.getElementById('profile-occupation').textContent = currentUserProfile.occupation;
+                document.getElementById('profile-company').textContent = currentUserProfile.company;
+            }
+
+            editProfileBtn.addEventListener('click', () => {
+                document.getElementById('edit-pic-preview').src = currentUserProfile.profilePicture;
+                document.getElementById('edit-name').value = currentUserProfile.fullName;
+                document.getElementById('edit-email').value = currentUserProfile.email;
+                document.getElementById('edit-occupation').value = currentUserProfile.occupation;
+                document.getElementById('edit-company').value = currentUserProfile.company;
+                profileView.classList.add('hidden');
+                profileEdit.classList.remove('hidden');
+            });
+
+            editPicPreview.parentElement.addEventListener('click', () => editPicInput.click());
+            editPicInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => { editPicPreview.src = event.target.result; };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            saveProfileBtn.addEventListener('click', () => {
+                currentUserProfile.profilePicture = document.getElementById('edit-pic-preview').src;
+                currentUserProfile.fullName = document.getElementById('edit-name').value;
+                currentUserProfile.email = document.getElementById('edit-email').value;
+                currentUserProfile.occupation = document.getElementById('edit-occupation').value;
+                currentUserProfile.company = document.getElementById('edit-company').value;
+                populateProfileView();
+                profileEdit.classList.add('hidden');
+                profileView.classList.remove('hidden');
+                dashShowToast('Profile updated successfully!', 'success');
+            });
+
+            cancelEditBtn.addEventListener('click', () => {
+                profileEdit.classList.add('hidden');
+                profileView.classList.remove('hidden');
+            });
+
+            // --- Settings Page Logic ---
+            const applyDarkMode = (isDark) => {
+                const dashBody = document.querySelector("#dashboard-container > div");
+                dashBody.classList.toggle('dark', isDark);
+                dashDarkModeToggle.checked = isDark;
+            };
+            dashDarkModeToggle.addEventListener('change', (e) => {
+                localStorage.setItem('darkMode', e.target.checked);
+                applyDarkMode(e.target.checked);
+            });
+            document.getElementById('notifications-toggle').addEventListener('change', (e) => {
+               dashShowToast(Notifications ${e.target.checked ? 'enabled' : 'disabled'}., 'info');
+            });
+
+            // --- Final Dashboard Initialization ---
+            applyDarkMode(localStorage.getItem('darkMode') === 'true');
+            populateProfileView();
+            dashSwitchPage('profile');
+            renderTable();
+            renderDownloadedReports();
+        }
+    </script>
+</body>
+</html>
